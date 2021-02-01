@@ -6,6 +6,7 @@ authors = ["Maarten de Vries <maarten@de-vri.es>"]
 license = "BSD-2-Clause"
 keywords = ["memfd", "file", "memory", "sealing", "fd"]
 categories = ["filesystem", "os::unix-apis"]
+readme = "README.md"
 
 edition = "2018"
 
