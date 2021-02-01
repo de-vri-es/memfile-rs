@@ -5,5 +5,7 @@ authors = ["Maarten de Vries <maarten@de-vri.es>"]
 edition = "2018"
 
 [dependencies]
-enumflags2 = { version = "0.6.4", features = ["not_literal"] }
 libc = "0.2.84"
+
+[dev-dependencies]
+assert2 = "0.3.4"

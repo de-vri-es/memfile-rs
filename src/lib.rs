@@ -1,8 +1,10 @@
-use enumflags2::BitFlags;
 use std::fs::File;
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
 mod sys;
+mod seal;
+
+pub use seal::{Seal, Seals};
 
 /// A memory backed file that can have seals applied to it.
 ///
@@ -48,7 +50,7 @@ impl MemFile {
 		}
 	}
 
-	/// Truncates or extends the underlying file, updating the size of this file to become size.
+	/// Truncate or extend the underlying file, updating the size of this file to become size.
 	///
 	/// If the size is less than the current file's size, then the file will be shrunk.
 	/// If it is greater than the current file's size, then the file will be extended to size and have all of the intermediate data filled in with 0s.
@@ -144,46 +146,6 @@ impl From<MemFile> for std::process::Stdio {
 	fn from(other: MemFile) -> Self {
 		other.file.into()
 	}
-}
-
-/// A set of [seals][Seal].
-pub type Seals = enumflags2::BitFlags<Seal>;
-
-/// A seal that prevents certain actions from being performed on a file.
-///
-/// Note that seals apply to a file, not a file descriptor.
-/// If two file descriptors refer to the same file, they share the same set of seals.
-///
-/// Seals can not be removed from a file once applied.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash, BitFlags)]
-#[repr(u32)]
-#[non_exhaustive]
-pub enum Seal {
-	/// Prevent adding more seals to the file.
-	Seal = libc::F_SEAL_SEAL as u32,
-
-	/// Prevent the file from being shrunk with `truncate` or similar.
-	///
-	/// Combine with [`Seal::Grow`] to prevent the file from being resized in any way.
-	Shrink = libc::F_SEAL_SHRINK as u32,
-
-	/// Prevent the file from being extended with `truncate`, `fallocate` or simillar.
-	///
-	/// Combine with [`Seal::Shrink`] to prevent the file from being resized in any way.
-	Grow = libc::F_SEAL_GROW as u32,
-
-	/// Prevent write to the file.
-	///
-	/// This will block *all* writes to the file and prevents any shared, writable memory mappings from being created.
-	///
-	/// If a shared, writable memory mapping already exists, adding this seal will fail.
-	Write = libc::F_SEAL_WRITE as u32,
-
-	/// Similar to [`Seal::Write`], but allows existing shared, writable memory mappings to modify the file contents.
-	///
-	/// This can be used to share a read-only view of the file with other processes,
-	/// while still being able to modify the contents through an existing mapping.
-	FutureWrite = libc::F_SEAL_FUTURE_WRITE as u32,
 }
 
 /// Options for creating a [`MemFile`].
