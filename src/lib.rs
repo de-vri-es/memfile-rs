@@ -39,6 +39,21 @@ impl MemFile {
 		}
 	}
 
+	/// Get a shared reference to the internal [`std::fs::File`].
+	pub fn as_file(&self) -> &File {
+		&self.file
+	}
+
+	/// Get a unique reference to the internal [`std::fs::File`].
+	pub fn as_file_mut(&mut self) -> &mut File {
+		&mut self.file
+	}
+
+	/// Convert `self` into a [`std::fs::File`].
+	pub fn into_file(self) -> File {
+		self.file
+	}
+
 	/// Get the active seals of the file.
 	pub fn get_seals(&self) -> std::io::Result<Seals> {
 		let seals = sys::memfd_get_seals(self.as_raw_fd())?;
