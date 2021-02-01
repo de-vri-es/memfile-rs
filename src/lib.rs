@@ -8,6 +8,7 @@ mod sys;
 ///
 /// The struct implements [`AsRawFd`], [`IntoRawFd`] and [`FromRawFd`].
 /// When using [`FromRawFd::from_raw_fd`], you must ensure that the file descriptor is a valid `memfd`.
+#[derive(Debug)]
 pub struct MemFile {
 	file: File,
 }
@@ -23,13 +24,21 @@ impl MemFile {
 		Ok(Self { file })
 	}
 
-	/// Wrap an already-open file as MemFile.
+	/// Try to create a new [`MemFd`] Createinstance that shares the same underlying file handle as the existing [`MemFd`] instance.
+	///
+	/// Reads, writes, and seeks will affect both [`MemFd`] instances simultaneously.
+	pub fn try_clone(&self) -> std::io::Result<Self> {
+		let file = self.file.try_clone()?;
+		Ok(Self { file })
+	}
+
+	/// Wrap an already-open file as [`MemFile`].
 	///
 	/// This function returns an error if the file was not created by `memfd_create`.
 	///
 	/// If the function succeeds, the passed in file object is consumed and the returned [`MemFile`] takes ownership of the file descriptor.
 	/// If the function fails, the original file object is included in the returned error.
-	pub fn from_fd<T: AsRawFd + IntoRawFd>(file: T) -> Result<Self, FromFdError<T>> {
+	pub fn from_file<T: AsRawFd + IntoRawFd>(file: T) -> Result<Self, FromFdError<T>> {
 		match sys::memfd_get_seals(file.as_raw_fd()) {
 			Ok(_) => {
 				let file = unsafe { File::from_raw_fd(file.into_raw_fd()) };
@@ -39,19 +48,14 @@ impl MemFile {
 		}
 	}
 
-	/// Get a shared reference to the internal [`std::fs::File`].
-	pub fn as_file(&self) -> &File {
-		&self.file
-	}
-
-	/// Get a unique reference to the internal [`std::fs::File`].
-	pub fn as_file_mut(&mut self) -> &mut File {
-		&mut self.file
-	}
-
-	/// Convert `self` into a [`std::fs::File`].
-	pub fn into_file(self) -> File {
-		self.file
+	/// Truncates or extends the underlying file, updating the size of this file to become size.
+	///
+	/// If the size is less than the current file's size, then the file will be shrunk.
+	/// If it is greater than the current file's size, then the file will be extended to size and have all of the intermediate data filled in with 0s.
+	/// The file's cursor isn't changed.
+	/// In particular, if the cursor was at the end and the file is shrunk using this operation, the cursor will now be past the end.
+	pub fn set_len(&self, size: u64) -> std::io::Result<()> {
+		self.file.set_len(size)
 	}
 
 	/// Get the active seals of the file.
@@ -101,6 +105,44 @@ impl AsRawFd for MemFile {
 impl IntoRawFd for MemFile {
 	fn into_raw_fd(self) -> RawFd {
 		self.file.into_raw_fd()
+	}
+}
+
+impl std::os::unix::fs::FileExt for MemFile {
+	fn read_at(&self, buf: &mut [u8], offset: u64) -> std::io::Result<usize> {
+		self.file.read_at(buf, offset)
+	}
+
+	fn write_at(&self, buf: &[u8], offset: u64) -> std::io::Result<usize> {
+		self.file.write_at(buf, offset)
+	}
+}
+
+impl std::io::Write for MemFile {
+	fn flush(&mut self) -> std::io::Result<()> {
+		self.file.flush()
+	}
+
+	fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+		self.file.write(buf)
+	}
+}
+
+impl std::io::Read for MemFile {
+	fn read(&mut self, buf: &mut[u8]) -> std::io::Result<usize> {
+		self.file.read(buf)
+	}
+}
+
+impl std::io::Seek for MemFile {
+	fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+		self.file.seek(pos)
+	}
+}
+
+impl From<MemFile> for std::process::Stdio {
+	fn from(other: MemFile) -> Self {
+		other.file.into()
 	}
 }
 
