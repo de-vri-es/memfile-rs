@@ -1,6 +1,7 @@
+use std::fs::File;
 use std::os::raw::c_int;
+use std::os::unix::io::FromRawFd;
 use std::os::unix::io::RawFd;
-use filedesc::FileDesc;
 
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 mod raw {
@@ -10,13 +11,13 @@ mod raw {
 	}
 }
 
-pub fn memfd_create(name: &str, flags: c_int) -> std::io::Result<FileDesc> {
+pub fn memfd_create(name: &str, flags: c_int) -> std::io::Result<File> {
 	let name = std::ffi::CString::new(name)?;
 	let fd = unsafe { raw::memfd_create(name.as_ptr(), flags) };
 	if fd < 0 {
 		Err(std::io::Error::last_os_error())
 	} else {
-		Ok(unsafe { FileDesc::from_raw_fd(fd) })
+		Ok(unsafe { File::from_raw_fd(fd) })
 	}
 }
 

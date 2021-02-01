@@ -1,5 +1,5 @@
-use filedesc::FileDesc;
 use enumflags2::BitFlags;
+use std::fs::File;
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
 mod sys;
@@ -8,31 +8,34 @@ mod sys;
 ///
 /// The struct implements [`AsRawFd`], [`IntoRawFd`] and [`FromRawFd`].
 /// When using [`FromRawFd::from_raw_fd`], you must ensure that the file descriptor is a valid `memfd`.
-pub struct MemFd {
-	fd: filedesc::FileDesc,
+pub struct MemFile {
+	file: File,
 }
 
-impl MemFd {
+impl MemFile {
 	/// Create a new `memfd` with the given options.
 	///
 	/// The close-on-exec flag is set on the created file descriptor.
 	/// If you want to pass it to a child process, you should use [`libc::dup2`] or something similar *after forking*.
 	/// Disabling the close-on-exec flag before forking causes a race condition with other threads.
 	pub fn create(name: &str, options: &CreateOptions) -> std::io::Result<Self> {
-		let fd = sys::memfd_create(name, options.as_flags())?;
-		Ok(Self { fd })
+		let file = sys::memfd_create(name, options.as_flags())?;
+		Ok(Self { file })
 	}
 
-	/// Wrap an already-open file as MemFd.
+	/// Wrap an already-open file as MemFile.
 	///
-	/// This function returns an error if the fd is not a `memfd`.
+	/// This function returns an error if the file was not created by `memfd_create`.
 	///
-	/// If the function succeeds, the passed in file object is consumed and the returned [`MemFd`] takes ownership of the file descriptor.
+	/// If the function succeeds, the passed in file object is consumed and the returned [`MemFile`] takes ownership of the file descriptor.
 	/// If the function fails, the original file object is included in the returned error.
-	pub fn from_fd<T: AsRawFd + IntoRawFd>(fd: T) -> Result<Self, FromFdError<T>> {
-		match sys::memfd_get_seals(fd.as_raw_fd()) {
-			Ok(_) => Ok(Self { fd: FileDesc::new(fd) }),
-			Err(error) => Err(FromFdError { error, fd }),
+	pub fn from_fd<T: AsRawFd + IntoRawFd>(file: T) -> Result<Self, FromFdError<T>> {
+		match sys::memfd_get_seals(file.as_raw_fd()) {
+			Ok(_) => {
+				let file = unsafe { File::from_raw_fd(file.into_raw_fd()) };
+				Ok(Self { file })
+			},
+			Err(error) => Err(FromFdError { error, file }),
 		}
 	}
 
@@ -67,22 +70,22 @@ impl MemFd {
 	}
 }
 
-impl FromRawFd for MemFd {
+impl FromRawFd for MemFile {
 	unsafe fn from_raw_fd(fd: RawFd) -> Self {
-		let fd = FileDesc::from_raw_fd(fd);
-		Self { fd }
+		let file = File::from_raw_fd(fd);
+		Self { file }
 	}
 }
 
-impl AsRawFd for MemFd {
+impl AsRawFd for MemFile {
 	fn as_raw_fd(&self) -> RawFd {
-		self.fd.as_raw_fd()
+		self.file.as_raw_fd()
 	}
 }
 
-impl IntoRawFd for MemFd {
+impl IntoRawFd for MemFile {
 	fn into_raw_fd(self) -> RawFd {
-		self.fd.into_raw_fd()
+		self.file.into_raw_fd()
 	}
 }
 
@@ -126,7 +129,7 @@ pub enum Seal {
 	FutureWrite = libc::F_SEAL_FUTURE_WRITE as u32,
 }
 
-/// Options for creating a [`MemFd`].
+/// Options for creating a [`MemFile`].
 ///
 /// Support for options depend on platform and OS details.
 /// Refer to your kernel documentation of `memfd_create` for details.
@@ -137,7 +140,7 @@ pub struct CreateOptions {
 }
 
 impl CreateOptions {
-	/// Get the default creation options for a [`MemFd`].
+	/// Get the default creation options for a [`MemFile`].
 	///
 	/// Initially, file sealing is not enabled no no huge TLB page size is configured.
 	///
@@ -148,7 +151,7 @@ impl CreateOptions {
 		Self::default()
 	}
 
-	/// Allow sealing operations on the created [`MemFd`].
+	/// Allow sealing operations on the created [`MemFile`].
 	pub fn allow_sealing(&mut self, value: bool) -> &mut Self {
 		self.allow_sealing = value;
 		self
@@ -199,14 +202,14 @@ pub enum HugeTlb {
 	Huge16GB = sys::flags::MFD_HUGE_16GB as u32,
 }
 
-/// Error returned when the file passed to [`MemFd::from_fd`] is not a `memfd`.
+/// Error returned when the file passed to [`MemFile::from_fd`] is not a `memfd`.
 ///
 /// This struct contains the [`std::io::Error`] that occurred and the original value passed to `from_fd`.
 /// It is also directly convertible to [`std::io::Error`], so you can pass it up using the `?` operator
 /// from a function that returns an [`std::io::Result`].
 pub struct FromFdError<T> {
 	error: std::io::Error,
-	fd: T,
+	file: T,
 }
 
 impl<T> FromFdError<T> {
@@ -216,13 +219,13 @@ impl<T> FromFdError<T> {
 	}
 
 	/// Get a reference to the original file object.
-	pub fn fd(&self) -> &T {
-		&self.fd
+	pub fn file(&self) -> &T {
+		&self.file
 	}
 
 	/// Consume the struct and return the I/O error and the original file object as tuple.
 	pub fn into_parts(self) -> (std::io::Error, T) {
-		(self.error, self.fd)
+		(self.error, self.file)
 	}
 
 	/// Consume the struct and return the I/O error.
@@ -231,8 +234,8 @@ impl<T> FromFdError<T> {
 	}
 
 	/// Consume the struct and return the original file object.
-	pub fn into_fd(self) -> T {
-		self.fd
+	pub fn into_file(self) -> T {
+		self.file
 	}
 }
 
