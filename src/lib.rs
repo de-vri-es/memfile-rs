@@ -1,3 +1,50 @@
+//! This contains thin wrappers around `memfd_create` and their file sealing API.
+//!
+//! The [`MemFile`] struct represents a file created by the `memfd_create` syscall.
+//! Such files are memory backed and fully anonymous, meaning no other process can see them (well... except by looking in `/proc` on Linux).
+//!
+//! After creation, the file descriptors can be shared with child processes, or even sent to other processes over a Unix socket.
+//! The files can then be memory mapped to be used as shared memory.
+//!
+//! This is all quite similar to `shmopen`, except that files created by `shmopen` are not anoynmous.
+//! Depending on your application, the anonymous nature of `memfd` may be a nice property.
+//! Additionally, files created by `shmopen` do not support file sealing.
+//!
+//! # File sealing
+//! You can enable file sealing for [`MemFile`] by creating them with [`CreateOptions::allow_sealing(true)`][CreateOptions::allow_sealing].
+//! This allows you to use [`MemFile::add_seals`] to add seals to the file.
+//! You can also get the list of seals with [`MemFile::get_seals`].
+//!
+//! Once a seal is added to a file, it can not be removed.
+//! Each seal prevents certain types of actions on the file.
+//! For example: the [`Seal::Write`] seal prevents writing to the file, both through syscalls and memory mappings,
+//! and the [`Seal::Shrink`] and [`Seal::Grow`] seals prevent the file from being resized.
+//!
+//! This is quite interesting for Rust, as it is the only guaranteed safe way to map memory:
+//! when a file is sealed with [`Seal::Write`] and [`Seal::Shrink`], it is file contents can not change, and the file can not be shrinked.
+//! The latter is also important, because trying to read from a memory mapping a of file that was shrinked will raise a `SIGBUS` signal
+//! and likely crash your application.
+//!
+//! Another interesting option is to first create a shared, writable memory mapping for your [`MemFile`],
+//! and then add the [`Seal::FutureWrite`] and [`Seal::Shrink`] seals.
+//! The existing memory mapping can still be used to change the contents of the file, but no new shared, writable memory mappings can be created.
+//! When sharing the file with other processes, it prevents those processes from shrinking or writing to the file,
+//! while the original process can still change the file contents.
+//!
+//! # Example
+//! ```
+//! # fn main() -> std::io::Result<()> {
+//! use memfile::{MemFile, CreateOptions, Seal};
+//! use std::io::Write;
+//!
+//! let mut file = MemFile::create("foo", CreateOptions::new().allow_sealing(true))?;
+//! file.write_all(b"Hello world!")?;
+//! file.add_seals(Seal::Write | Seal::Shrink | Seal::Grow)?;
+//! // From now on, all writes or attempts to created shared, writable memory mappings will fail.
+//! # Ok(())
+//! # }
+//! ```
+
 use std::fs::File;
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
@@ -26,9 +73,9 @@ impl MemFile {
 		Ok(Self { file })
 	}
 
-	/// Try to create a new [`MemFd`] Createinstance that shares the same underlying file handle as the existing [`MemFd`] instance.
+	/// Try to create a new [`MemFile`] Createinstance that shares the same underlying file handle as the existing [`MemFile`] instance.
 	///
-	/// Reads, writes, and seeks will affect both [`MemFd`] instances simultaneously.
+	/// Reads, writes, and seeks will affect both [`MemFile`] instances simultaneously.
 	pub fn try_clone(&self) -> std::io::Result<Self> {
 		let file = self.file.try_clone()?;
 		Ok(Self { file })
@@ -221,9 +268,9 @@ pub enum HugeTlb {
 	Huge16GB = sys::flags::MFD_HUGE_16GB as u32,
 }
 
-/// Error returned when the file passed to [`MemFile::from_fd`] is not a `memfd`.
+/// Error returned when the file passed to [`MemFile::from_file`] is not a `memfd`.
 ///
-/// This struct contains the [`std::io::Error`] that occurred and the original value passed to `from_fd`.
+/// This struct contains the [`std::io::Error`] that occurred and the original value passed to `from_file`.
 /// It is also directly convertible to [`std::io::Error`], so you can pass it up using the `?` operator
 /// from a function that returns an [`std::io::Result`].
 pub struct FromFdError<T> {
