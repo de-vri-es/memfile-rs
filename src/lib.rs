@@ -120,6 +120,13 @@ impl MemFile {
 		}
 	}
 
+	/// Convert this [`MemFile`] into an [`std::fs::File`].
+	///
+	/// This may be useful for interoperability with other crates.
+	pub fn into_file(self) -> std::fs::File {
+		self.file
+	}
+
 	/// Query metadata about the underlying file.
 	///
 	/// Note that not all information in the metadata is not very meaningfull for a `memfd`.

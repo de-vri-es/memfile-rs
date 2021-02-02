@@ -1,3 +1,6 @@
+# Unreleased
+* Added `MemFile::into_file()` for safe ineroperability with crates that expect an `std::fs::File`.
+
 # v0.1.2 - 2021-02-02
 * Added `create_default()` and `create_sealable()` shorthand constructors.
 * Added `MemFile::metadata()` method.
