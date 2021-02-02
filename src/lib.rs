@@ -65,6 +65,10 @@ pub struct MemFile {
 impl MemFile {
 	/// Create a new `memfd` with the given options.
 	///
+	/// The `name` argument is purely for debugging purposes.
+	/// On Linux it shows up in `/proc`, but it serves no other purpose.
+	/// In particular, multiple files can be created with the same name.
+	///
 	/// The close-on-exec flag is set on the created file descriptor.
 	/// If you want to pass it to a child process, you should use [`libc::dup2`] or something similar *after forking*.
 	/// Disabling the close-on-exec flag before forking causes a race condition with other threads.
