@@ -77,6 +77,25 @@ impl MemFile {
 		Ok(Self { file })
 	}
 
+	/// Create a new `memfd` with default options.
+	///
+	/// Sealing is not enabled for the created file.
+	///
+	/// See [`Self::create`] for more information.
+	pub fn create_default(name: &str) -> std::io::Result<Self> {
+		Self::create(name, &CreateOptions::default())
+	}
+
+	/// Create a new `memfd` with file sealing enabled.
+	///
+	/// Sealing is enabled for the created file.
+	/// All other options are the same as the defaults.
+	///
+	/// See [`Self::create`] for more information.
+	pub fn create_sealable(name: &str) -> std::io::Result<Self> {
+		Self::create(name, CreateOptions::new().allow_sealing(true))
+	}
+
 	/// Try to create a new [`MemFile`] Createinstance that shares the same underlying file handle as the existing [`MemFile`] instance.
 	///
 	/// Reads, writes, and seeks will affect both [`MemFile`] instances simultaneously.
