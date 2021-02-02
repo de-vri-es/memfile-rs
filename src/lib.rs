@@ -21,7 +21,7 @@
 //! and the [`Seal::Shrink`] and [`Seal::Grow`] seals prevent the file from being resized.
 //!
 //! This is quite interesting for Rust, as it is the only guaranteed safe way to map memory:
-//! when a file is sealed with [`Seal::Write`] and [`Seal::Shrink`], it is file contents can not change, and the file can not be shrinked.
+//! when a file is sealed with [`Seal::Write`] and [`Seal::Shrink`], the file contents can not change, and the file can not be shrinked.
 //! The latter is also important, because trying to read from a memory mapping a of file that was shrinked will raise a `SIGBUS` signal
 //! and likely crash your application.
 //!
