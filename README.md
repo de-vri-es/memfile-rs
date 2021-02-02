@@ -32,7 +32,7 @@ and likely crash your application.
 
 Another interesting option is to first create a shared, writable memory mapping for your [`MemFile`],
 and then add the [`Seal::FutureWrite`] and [`Seal::Shrink`] seals.
-The existing memory mapping can still be used to change the contents of the file, but no new shared, writable memory mappings can be created.
+In that case, only the existing memory mapping can be used to change the contents of the file, even after the seals have been added.
 When sharing the file with other processes, it prevents those processes from shrinking or writing to the file,
 while the original process can still change the file contents.
 
