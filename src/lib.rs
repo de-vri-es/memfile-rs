@@ -22,7 +22,7 @@
 //!
 //! This is quite interesting for Rust, as it is the only guaranteed safe way to map memory:
 //! when a file is sealed with [`Seal::Write`] and [`Seal::Shrink`], the file contents can not change, and the file can not be shrinked.
-//! The latter is also important, because trying to read from a memory mapping a of file that was shrinked will raise a `SIGBUS` signal
+//! The latter is also important, because trying to read from a memory mapping a of file that was shrinked too far will raise a `SIGBUS` signal
 //! and likely crash your application.
 //!
 //! Another interesting option is to first create a shared, writable memory mapping for your [`MemFile`],
