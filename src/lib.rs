@@ -1,9 +1,9 @@
-//! This contains thin wrappers around `memfd_create` and their file sealing API.
+//! This contains thin wrappers around `memfd_create` and the associated file sealing API.
 //!
 //! The [`MemFile`] struct represents a file created by the `memfd_create` syscall.
 //! Such files are memory backed and fully anonymous, meaning no other process can see them (well... except by looking in `/proc` on Linux).
 //!
-//! After creation, the file descriptors can be shared with child processes, or even sent to other processes over a Unix socket.
+//! After creation, the file descriptors can be shared with child processes, or even sent to another process over a Unix socket.
 //! The files can then be memory mapped to be used as shared memory.
 //!
 //! This is all quite similar to `shmopen`, except that files created by `shmopen` are not anoynmous.
