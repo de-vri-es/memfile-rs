@@ -6,9 +6,9 @@
 //! After creation, the file descriptors can be shared with child processes, or even sent to another process over a Unix socket.
 //! The files can then be memory mapped to be used as shared memory.
 //!
-//! This is all quite similar to `shmopen`, except that files created by `shmopen` are not anoynmous.
+//! This is all quite similar to `shm_open`, except that files created by `shm_open` are not anoynmous.
 //! Depending on your application, the anonymous nature of `memfd` may be a nice property.
-//! Additionally, files created by `shmopen` do not support file sealing.
+//! Additionally, files created by `shm_open` do not support file sealing.
 //!
 //! # File sealing
 //! You can enable file sealing for [`MemFile`] by creating them with [`CreateOptions::allow_sealing(true)`][CreateOptions::allow_sealing].
