@@ -120,6 +120,15 @@ impl MemFile {
 		}
 	}
 
+	/// Query metadata about the underlying file.
+	///
+	/// Note that not all information in the metadata is not very meaningfull for a `memfd`.
+	/// The file type is particularly useless since it is always the same.
+	/// Some information, like the file size, may be useful.
+	pub fn metadata(&self) -> std::io::Result<std::fs::Metadata> {
+		self.file.metadata()
+	}
+
 	/// Truncate or extend the underlying file, updating the size of this file to become size.
 	///
 	/// If the size is less than the current file's size, then the file will be shrunk.

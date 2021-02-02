@@ -1,5 +1,6 @@
 # Unreleased
 * Added `create_default()` and `create_sealable()` shorthand constructors.
+* Added `MemFile::metadata()` method.
 * Tweaked documentation.
 
 # v0.1.1 - 2021-02-02
