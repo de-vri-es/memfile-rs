@@ -1,4 +1,4 @@
-# Unreleased
+# v0.1.2 - 2021-02-02
 * Added `MemFile::into_file()` for safe ineroperability with crates that expect an `std::fs::File`.
 
 # v0.1.2 - 2021-02-02
