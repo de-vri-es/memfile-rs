@@ -72,7 +72,7 @@ impl MemFile {
 	/// The close-on-exec flag is set on the created file descriptor.
 	/// If you want to pass it to a child process, you should use [`libc::dup2`] or something similar *after forking*.
 	/// Disabling the close-on-exec flag before forking causes a race condition with other threads.
-	pub fn create(name: &str, options: &CreateOptions) -> std::io::Result<Self> {
+	pub fn create(name: &str, options: CreateOptions) -> std::io::Result<Self> {
 		let file = sys::memfd_create(name, options.as_flags())?;
 		Ok(Self { file })
 	}
@@ -83,7 +83,7 @@ impl MemFile {
 	///
 	/// See [`Self::create`] for more information.
 	pub fn create_default(name: &str) -> std::io::Result<Self> {
-		Self::create(name, &CreateOptions::default())
+		Self::create(name, CreateOptions::default())
 	}
 
 	/// Create a new `memfd` with file sealing enabled.
@@ -261,11 +261,11 @@ impl CreateOptions {
 	/// This is a shorthand for [`MemFile::create`].
 	/// See that function for more details.
 	pub fn create(&self, name: &str) -> std::io::Result<MemFile> {
-		MemFile::create(name, self)
+		MemFile::create(name, *self)
 	}
 
 	/// Allow sealing operations on the created [`MemFile`].
-	pub fn allow_sealing(&mut self, value: bool) -> &mut Self {
+	pub fn allow_sealing(mut self, value: bool) -> Self {
 		self.allow_sealing = value;
 		self
 	}
@@ -274,7 +274,7 @@ impl CreateOptions {
 	///
 	/// Support for this feature and specific sizes depend on the CPU and kernel configuration.
 	/// See also: <https://www.kernel.org/doc/html/latest/admin-guide/mm/hugetlbpage.html>
-	pub fn huge_tlb(&mut self, value: impl Into<Option<HugeTlb>>) -> &mut Self {
+	pub fn huge_tlb(mut self, value: impl Into<Option<HugeTlb>>) -> Self {
 		self.huge_table = value.into();
 		self
 	}
