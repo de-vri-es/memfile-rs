@@ -1,3 +1,6 @@
+# v0.2.0
+* Add `CreateOptions::create()` as shorthand for `MemFile::create()`.
+
 # v0.1.2 - 2021-02-02
 * Added `MemFile::into_file()` for safe ineroperability with crates that expect an `std::fs::File`.
 

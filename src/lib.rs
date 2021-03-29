@@ -256,6 +256,14 @@ impl CreateOptions {
 		Self::default()
 	}
 
+	/// Create a new [`MemFile`]` with the given options.
+	///
+	/// This is a shorthand for [`MemFile::create`].
+	/// See that function for more details.
+	pub fn create(&self, name: &str) -> std::io::Result<MemFile> {
+		MemFile::create(name, self)
+	}
+
 	/// Allow sealing operations on the created [`MemFile`].
 	pub fn allow_sealing(&mut self, value: bool) -> &mut Self {
 		self.allow_sealing = value;
