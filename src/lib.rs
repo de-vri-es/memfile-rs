@@ -274,8 +274,8 @@ impl CreateOptions {
 	///
 	/// Support for this feature and specific sizes depend on the CPU and kernel configuration.
 	/// See also: <https://www.kernel.org/doc/html/latest/admin-guide/mm/hugetlbpage.html>
-	pub fn huge_tlb(&mut self, value: Option<HugeTlb>) -> &mut Self {
-		self.huge_table = value;
+	pub fn huge_tlb(&mut self, value: impl Into<Option<HugeTlb>>) -> &mut Self {
+		self.huge_table = value.into();
 		self
 	}
 
