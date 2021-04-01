@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::os::raw::c_int;
+use std::ffi::CStr;
 use std::os::unix::io::FromRawFd;
 use std::os::unix::io::RawFd;
 
@@ -13,6 +14,10 @@ mod raw {
 
 pub fn memfd_create(name: &str, flags: c_int) -> std::io::Result<File> {
 	let name = std::ffi::CString::new(name)?;
+	memfd_create_cstr(&name, flags)
+}
+
+pub fn memfd_create_cstr(name: &CStr, flags: c_int) -> std::io::Result<File> {
 	let fd = unsafe { raw::memfd_create(name.as_ptr(), flags) };
 	if fd < 0 {
 		Err(std::io::Error::last_os_error())

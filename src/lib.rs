@@ -45,6 +45,7 @@
 //! # }
 //! ```
 
+use std::ffi::CStr;
 use std::fs::File;
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
@@ -74,6 +75,15 @@ impl MemFile {
 	/// Disabling the close-on-exec flag before forking causes a race condition with other threads.
 	pub fn create(name: &str, options: CreateOptions) -> std::io::Result<Self> {
 		let file = sys::memfd_create(name, options.as_flags())?;
+		Ok(Self { file })
+	}
+
+	/// Create a new [`MemFile`] with the given options.
+	///
+	/// This is identical to [`Self::create`], except that it takes the name as [`CStr`] to avoid allocations.
+	/// See that function for more information.
+	pub fn create_cstr(name: &CStr, options: CreateOptions) -> std::io::Result<Self> {
+		let file = sys::memfd_create_cstr(name, options.as_flags())?;
 		Ok(Self { file })
 	}
 
@@ -263,6 +273,14 @@ impl CreateOptions {
 	/// See that function for more details.
 	pub fn create(&self, name: &str) -> std::io::Result<MemFile> {
 		MemFile::create(name, *self)
+	}
+
+	/// Create a new [`MemFile`]` with the current options.
+	///
+	/// This is identical to [`Self::create`], except that it takes the name as [`CStr`] to avoid allocations.
+	/// See [`MemFile::create`] for more details.
+	pub fn create_cstr(&self, name: &CStr) -> std::io::Result<MemFile> {
+		MemFile::create_cstr(name, *self)
 	}
 
 	/// Allow sealing operations on the created [`MemFile`].
