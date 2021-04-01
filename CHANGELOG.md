@@ -1,4 +1,4 @@
-# v0.2.0
+# v0.2.0 - 2021-04-01
 * Add `CreateOptions::create()` as shorthand for `MemFile::create()`.
 * Change `CreateOptions::huge_tlb()` to accept any `Into<Option<HugeTlb>>`.
 * Take and return `CreateOptions` by value.
