@@ -63,7 +63,7 @@ pub struct MemFile {
 }
 
 impl MemFile {
-	/// Create a new `memfd` with the given options.
+	/// Create a new [`MemFile`] with the given options.
 	///
 	/// The `name` argument is purely for debugging purposes.
 	/// On Linux it shows up in `/proc`, but it serves no other purpose.
@@ -77,7 +77,7 @@ impl MemFile {
 		Ok(Self { file })
 	}
 
-	/// Create a new `memfd` with default options.
+	/// Create a new [`MemFile`] with default options.
 	///
 	/// Sealing is not enabled for the created file.
 	///
@@ -86,7 +86,7 @@ impl MemFile {
 		Self::create(name, CreateOptions::default())
 	}
 
-	/// Create a new `memfd` with file sealing enabled.
+	/// Create a new [`MemFile`] with file sealing enabled.
 	///
 	/// Sealing is enabled for the created file.
 	/// All other options are the same as the defaults.
@@ -96,9 +96,10 @@ impl MemFile {
 		Self::create(name, CreateOptions::new().allow_sealing(true))
 	}
 
-	/// Try to create a new [`MemFile`] Createinstance that shares the same underlying file handle as the existing [`MemFile`] instance.
+	/// Create a new [`MemFile`] that shares the same underlying file handle.
 	///
-	/// Reads, writes, and seeks will affect both [`MemFile`] instances simultaneously.
+	/// The clones [`MemFile`] has a new file descriptor,
+	/// but reads, writes, and seeks will affect both [`MemFile`] instances simultaneously.
 	pub fn try_clone(&self) -> std::io::Result<Self> {
 		let file = self.file.try_clone()?;
 		Ok(Self { file })
@@ -237,7 +238,7 @@ impl From<MemFile> for std::process::Stdio {
 /// Options for creating a [`MemFile`].
 ///
 /// Support for options depend on platform and OS details.
-/// Refer to your kernel documentation of `memfd_create` for details.
+/// Refer to your OS documentation for `memfd_create` for more information.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CreateOptions {
 	allow_sealing: bool,
@@ -256,7 +257,7 @@ impl CreateOptions {
 		Self::default()
 	}
 
-	/// Create a new [`MemFile`]` with the given options.
+	/// Create a new [`MemFile`]` with the current options.
 	///
 	/// This is a shorthand for [`MemFile::create`].
 	/// See that function for more details.
