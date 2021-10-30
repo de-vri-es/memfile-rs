@@ -12,6 +12,14 @@ mod raw {
 	}
 }
 
+#[cfg(target_os = "android")]
+mod raw {
+	use std::os::raw::{c_char, c_int};
+	pub unsafe fn memfd_create(name: *const c_char, flags: c_int) -> c_int {
+		libc::syscall(libc::SYS_memfd_create, name, flags) as c_int
+	}
+}
+
 pub fn memfd_create(name: &str, flags: c_int) -> std::io::Result<File> {
 	let name = std::ffi::CString::new(name)?;
 	memfd_create_cstr(&name, flags)
@@ -41,7 +49,7 @@ pub fn memfd_add_seals(fd: RawFd, seals: c_int) -> std::io::Result<()> {
 	}
 }
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "freebsd"))]
 pub mod flags {
 	// Linux values taken from:
 	// https://github.com/torvalds/linux/blob/1048ba83fb1c00cd24172e23e8263972f6b5d9ac/include/uapi/linux/memfd.h

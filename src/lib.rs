@@ -304,7 +304,7 @@ impl CreateOptions {
 		if self.allow_sealing {
 			flags |= sys::flags::MFD_ALLOW_SEALING;
 		}
-		#[cfg(target_os = "linux")]
+		#[cfg(any(target_os = "linux", target_os = "android", target_os = "freebsd"))]
 		if let Some(size) = self.huge_table {
 			flags |= sys::flags::MFD_HUGETLB | size as u32 as std::os::raw::c_int;
 		}

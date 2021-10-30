@@ -1,5 +1,25 @@
+#[cfg(target_os = "linux")]
 const SEAL_MASK: u32 = (libc::F_SEAL_SEAL | libc::F_SEAL_SHRINK | libc::F_SEAL_GROW | libc::F_SEAL_WRITE | libc::F_SEAL_FUTURE_WRITE) as u32;
-const ALL_SEALS: [Seal; 5] = [Seal::Seal, Seal::Shrink, Seal::Grow, Seal::Write, Seal::FutureWrite];
+
+#[cfg(not(target_os = "linux"))]
+const SEAL_MASK: u32 = (libc::F_SEAL_SEAL | libc::F_SEAL_SHRINK | libc::F_SEAL_GROW | libc::F_SEAL_WRITE) as u32;
+
+#[cfg(target_os = "linux")]
+const ALL_SEALS: [Seal; 5] = [
+	Seal::Seal,
+	Seal::Shrink,
+	Seal::Grow,
+	Seal::Write,
+	Seal::FutureWrite,
+];
+
+#[cfg(not(target_os = "linux"))]
+const ALL_SEALS: [Seal; 4] = [
+	Seal::Seal,
+	Seal::Shrink,
+	Seal::Grow,
+	Seal::Write,
+];
 
 /// A seal that prevents certain actions from being performed on a file.
 ///
@@ -35,6 +55,7 @@ pub enum Seal {
 	///
 	/// This can be used to share a read-only view of the file with other processes,
 	/// while still being able to modify the contents through an existing mapping.
+	#[cfg(target_os = "linux")]
 	FutureWrite = libc::F_SEAL_FUTURE_WRITE as u32,
 }
 
