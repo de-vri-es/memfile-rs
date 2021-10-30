@@ -1,3 +1,6 @@
+# main
+* Fix compatibility with FreeBSD and Android.
+
 # v0.2.0 - 2021-04-01
 * Added `CreateOptions::create()` as shorthand for `MemFile::create()`.
 * Changed `CreateOptions::huge_tlb()` to accept any `Into<Option<HugeTlb>>`.
