@@ -1,15 +1,26 @@
 name: CI
 on:
-  push: { branches: ["master", "main"] }
+  push: { branches: ["main"] }
   pull_request: { branches: "*" }
 
 jobs:
   build_and_test:
     name: Build and test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: ["x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl"]
     steps:
       - name: Checkout code
         uses: actions/checkout@master
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          profile: minimal
+          override: true,
 
       - uses: actions/cache@v2
         with:
@@ -17,8 +28,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.target }}-cargo
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -36,4 +47,37 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+          args: --color=always
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: ["aarch64-linux-android", "x86_64-unknown-freebsd"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          profile: minimal
+          override: true,
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-${{ matrix.target }}-cargo
+
+      - name: Check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
           args: --color=always
