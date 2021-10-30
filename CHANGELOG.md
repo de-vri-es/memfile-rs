@@ -1,4 +1,4 @@
-# main
+# v0.2.1 - 2021-10-30
 * Fix compatibility with FreeBSD and Android.
 
 # v0.2.0 - 2021-04-01
