@@ -107,6 +107,7 @@ fn seal_write() {
 }
 
 #[test]
+#[cfg(target_os = "linux")]
 fn seal_future_write() {
 	// TODO: to properly test this, we need to create a shared writable memory mapping, and validate that it remains usable,
 	// and that no new shared writable mappings can be made.
