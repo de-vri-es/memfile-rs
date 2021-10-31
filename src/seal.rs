@@ -366,12 +366,14 @@ mod test {
 		assert!(!Seals::empty().contains(Seal::Shrink));
 		assert!(!Seals::empty().contains(Seal::Grow));
 		assert!(!Seals::empty().contains(Seal::Write));
-		assert!(!Seals::empty().contains(Seal::FutureWrite));
+		#[cfg(target_os = "linux")]
+		{
+			assert!(!Seals::empty().contains(Seal::FutureWrite));
+		}
 	}
 
 	#[test]
 	fn test_all() {
-		assert!(Seals::all().len() == 5);
 		assert!(!Seals::all().is_empty());
 		assert!(Seals::all().is_all());
 		assert!(Seals::all().contains(Seals::empty()));
@@ -380,7 +382,15 @@ mod test {
 		assert!(Seals::all().contains(Seal::Shrink));
 		assert!(Seals::all().contains(Seal::Grow));
 		assert!(Seals::all().contains(Seal::Write));
-		assert!(Seals::all().contains(Seal::FutureWrite));
+		#[cfg(target_os = "linux")]
+		{
+			assert!(Seals::all().contains(Seal::FutureWrite));
+			assert!(Seals::all().len() == 5);
+		}
+		#[cfg(not(target_os = "linux"))]
+		{
+			assert!(Seals::all().len() == 4);
+		}
 	}
 
 	#[test]
@@ -390,7 +400,10 @@ mod test {
 		assert!(iter.next() == Some(Seal::Shrink));
 		assert!(iter.next() == Some(Seal::Grow));
 		assert!(iter.next() == Some(Seal::Write));
-		assert!(iter.next() == Some(Seal::FutureWrite));
+		#[cfg(target_os = "linux")]
+		{
+			assert!(iter.next() == Some(Seal::FutureWrite));
+		}
 		assert!(iter.next() == None);
 
 		let mut iter = (Seal::Shrink | Seal::Grow).into_iter();
@@ -401,12 +414,11 @@ mod test {
 
 	#[test]
 	fn test_bitor() {
-		assert!((Seal::Seal | Seal::FutureWrite | Seal::Write).len() == 3);
-		assert!((Seal::Seal | Seal::FutureWrite | Seal::Write).contains(Seal::Seal));
-		assert!(!(Seal::Seal | Seal::FutureWrite | Seal::Write).contains(Seal::Shrink));
-		assert!(!(Seal::Seal | Seal::FutureWrite | Seal::Write).contains(Seal::Grow));
-		assert!((Seal::Seal | Seal::FutureWrite | Seal::Write).contains(Seal::Write));
-		assert!((Seal::Seal | Seal::FutureWrite | Seal::Write).contains(Seal::FutureWrite));
+		assert!((Seal::Seal | Seal::Shrink | Seal::Write).len() == 3);
+		assert!((Seal::Seal | Seal::Shrink | Seal::Write).contains(Seal::Seal));
+		assert!(!(Seal::Seal | Seal::Shrink | Seal::Write).contains(Seal::Grow));
+		assert!((Seal::Seal | Seal::Shrink | Seal::Write).contains(Seal::Shrink));
+		assert!((Seal::Seal | Seal::Shrink | Seal::Write).contains(Seal::Write));
 	}
 
 	#[test]
@@ -418,7 +430,14 @@ mod test {
 
 	#[test]
 	fn test_bitxor() {
-		assert!(Seals::all() ^ (Seal::Seal | Seal::Write) == (Seal::Shrink | Seal::Grow | Seal::FutureWrite));
+		#[cfg(target_os = "linux")]
+		{
+			assert!(Seals::all() ^ (Seal::Seal | Seal::Write) == (Seal::Shrink | Seal::Grow | Seal::FutureWrite));
+		}
+		#[cfg(not(target_os = "linux"))]
+		{
+			assert!(Seals::all() ^ (Seal::Seal | Seal::Write) == (Seal::Shrink | Seal::Grow));
+		}
 	}
 
 	#[test]
@@ -426,6 +445,13 @@ mod test {
 		assert!(format!("{:?}", Seals::empty()) == "Seals { }");
 		assert!(format!("{:?}", Seals::from(Seal::Seal)) == "Seals { Seal }");
 		assert!(format!("{:?}", Seal::Seal | Seal::Shrink) == "Seals { Seal | Shrink }");
-		assert!(format!("{:?}", Seals::all()) == "Seals { Seal | Shrink | Grow | Write | FutureWrite }");
+		#[cfg(target_os = "linux")]
+		{
+			assert!(format!("{:?}", Seals::all()) == "Seals { Seal | Shrink | Grow | Write | FutureWrite }");
+		}
+		#[cfg(not(target_os = "linux"))]
+		{
+			assert!(format!("{:?}", Seals::all()) == "Seals { Seal | Shrink | Grow | Write }");
+		}
 	}
 }
