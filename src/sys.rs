@@ -4,7 +4,7 @@ use std::ffi::CStr;
 use std::os::unix::io::FromRawFd;
 use std::os::unix::io::RawFd;
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+#[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "macos"))]
 mod raw {
 	use std::os::raw::{c_char, c_int};
 	extern "C" {
@@ -49,7 +49,7 @@ pub fn memfd_add_seals(fd: RawFd, seals: c_int) -> std::io::Result<()> {
 	}
 }
 
-#[cfg(any(target_os = "linux", target_os = "android", target_os = "freebsd"))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "freebsd", target_os = "macos"))]
 pub mod flags {
 	// Linux values taken from:
 	// https://github.com/torvalds/linux/blob/1048ba83fb1c00cd24172e23e8263972f6b5d9ac/include/uapi/linux/memfd.h
