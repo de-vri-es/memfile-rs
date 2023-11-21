@@ -11,6 +11,7 @@ categories = ["filesystem", "os::unix-apis"]
 readme = "README.md"
 
 edition = "2018"
+publish = ["crates-io"]
 
 [dependencies]
 libc = "0.2.105"
