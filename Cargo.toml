@@ -10,7 +10,7 @@ keywords = ["memfd", "file", "memory", "sealing", "fd"]
 categories = ["filesystem", "os::unix-apis"]
 readme = "README.md"
 
-edition = "2018"
+edition = "2021"
 publish = ["crates-io"]
 
 [dependencies]

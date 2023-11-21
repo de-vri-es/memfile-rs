@@ -209,7 +209,7 @@ impl From<MemFile> for OwnedFd {
 	}
 }
 
-impl std::convert::TryFrom<OwnedFd> for MemFile {
+impl TryFrom<OwnedFd> for MemFile {
 	type Error = FromFdError;
 
 	fn try_from(value: OwnedFd) -> Result<Self, Self::Error> {
