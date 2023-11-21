@@ -1,0 +1,25 @@
+# Version 0.2.1 - 2021-10-30
+- [fix][minor] Fix compatibility with FreeBSD and Android.
+
+# Version 0.2.0 - 2021-04-01
+- [change][major] The `CreateOptions::huge_tlb()` function now accepts any `Into<Option<HugeTlb>>`.
+- [change][major] The setters on `CreateOptions` now take and return `self` by value.
+- [add][minor] Add `CreateOptions::create()` as shorthand for `MemFile::create()`.
+- [add][minor] Add functions to create a `MemFile` that don't allocate a `CString` for the name.
+
+# Version 0.1.3 - 2021-02-02
+- [add][minor] Add `MemFile::into_file()` for safe interoperability with crates that expect an `std::fs::File`.
+
+# Version 0.1.2 - 2021-02-02
+- [add][minor] Add `create_default()` and `create_sealable()` shorthand constructors.
+- [add][minor] Add `MemFile::metadata()` method.
+- [change][patch] Tweak documentation.
+
+# Version 0.1.1 - 2021-02-02
+- [change][patch] Added repository and documentation links to `Cargo.toml`.
+
+# Version 0.1.0 - 2021-02-02
+- [add][minor] Initial release.
+- [add][minor] Implemented support for Linux and FreeBSD.
+- [add][minor] Implemented memfd creation and I/O operations.
+- [add][minor] Implemented file sealing support.
