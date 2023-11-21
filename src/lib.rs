@@ -47,6 +47,7 @@
 
 use std::ffi::CStr;
 use std::fs::File;
+use std::os::fd::{BorrowedFd, AsFd, OwnedFd};
 use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd, RawFd};
 
 mod sys;
@@ -115,20 +116,34 @@ impl MemFile {
 		Ok(Self { file })
 	}
 
-	/// Wrap an already-open file as [`MemFile`].
+	/// Wrap an already-open [`OwnedFd`] as [`MemFile`].
 	///
 	/// This function returns an error if the file was not created by `memfd_create`.
 	///
 	/// If the function succeeds, the passed in file object is consumed and the returned [`MemFile`] takes ownership of the file descriptor.
-	/// If the function fails, the original file object is included in the returned error.
-	pub fn from_file<T: AsRawFd + IntoRawFd>(file: T) -> Result<Self, FromFdError<T>> {
-		match sys::memfd_get_seals(file.as_raw_fd()) {
+	/// If the function fails, the original [`OwnedFd`] is included in the returned error.
+	pub fn from_fd(fd: OwnedFd) -> Result<Self, FromFdError> {
+		match sys::memfd_get_seals(fd.as_raw_fd()) {
+			Err(error) => Err(FromFdError { error, fd }),
 			Ok(_) => {
-				let file = unsafe { File::from_raw_fd(file.into_raw_fd()) };
+				let file = File::from(fd);
 				Ok(Self { file })
-			},
-			Err(error) => Err(FromFdError { error, file }),
+			}
 		}
+	}
+
+	/// Convert this [`MemFile`] into an [`OwnedFd`].
+	///
+	/// This may be useful for interoperability with other crates.
+	pub fn into_fd(self) -> OwnedFd {
+		self.file.into()
+	}
+
+	/// Convert this [`MemFile`] into an [`OwnedFd`].
+	///
+	/// This may be useful for interoperability with other crates.
+	pub fn as_fd(&self) -> BorrowedFd<'_> {
+		self.file.as_fd()
 	}
 
 	/// Convert this [`MemFile`] into an [`std::fs::File`].
@@ -185,6 +200,26 @@ impl MemFile {
 	/// Adding seals that are already active is a no-op.
 	pub fn add_seals(&self, seals: Seals) -> std::io::Result<()> {
 		sys::memfd_add_seals(self.as_raw_fd(), seals.bits() as std::os::raw::c_int)
+	}
+}
+
+impl From<MemFile> for OwnedFd {
+	fn from(value: MemFile) -> Self {
+		value.file.into()
+	}
+}
+
+impl std::convert::TryFrom<OwnedFd> for MemFile {
+	type Error = FromFdError;
+
+	fn try_from(value: OwnedFd) -> Result<Self, Self::Error> {
+		MemFile::from_fd(value)
+	}
+}
+
+impl AsFd for MemFile {
+	fn as_fd(&self) -> BorrowedFd<'_> {
+		MemFile::as_fd(self)
 	}
 }
 
@@ -334,30 +369,30 @@ pub enum HugeTlb {
 	Huge16GB = sys::flags::MFD_HUGE_16GB as u32,
 }
 
-/// Error returned when the file passed to [`MemFile::from_file`] is not a `memfd`.
+/// Error returned when the file passed to [`MemFile::from_fd`] is not created by `memfd_create`.
 ///
-/// This struct contains the [`std::io::Error`] that occurred and the original value passed to `from_file`.
+/// This struct contains the [`std::io::Error`] that occurred and the original [`OwnedFd`].
 /// It is also directly convertible to [`std::io::Error`], so you can pass it up using the `?` operator
 /// from a function that returns an [`std::io::Result`].
-pub struct FromFdError<T> {
+pub struct FromFdError {
 	error: std::io::Error,
-	file: T,
+	fd: OwnedFd,
 }
 
-impl<T> FromFdError<T> {
+impl FromFdError {
 	/// Get a reference to the I/O error.
 	pub fn error(&self) -> &std::io::Error {
 		&self.error
 	}
 
-	/// Get a reference to the original file object.
-	pub fn file(&self) -> &T {
-		&self.file
+	/// Get a the original file descriptor as [`BorrowedFd`].
+	pub fn fd(&self) -> BorrowedFd<'_> {
+		self.fd.as_fd()
 	}
 
 	/// Consume the struct and return the I/O error and the original file object as tuple.
-	pub fn into_parts(self) -> (std::io::Error, T) {
-		(self.error, self.file)
+	pub fn into_parts(self) -> (std::io::Error, OwnedFd) {
+		(self.error, self.fd)
 	}
 
 	/// Consume the struct and return the I/O error.
@@ -366,13 +401,13 @@ impl<T> FromFdError<T> {
 	}
 
 	/// Consume the struct and return the original file object.
-	pub fn into_file(self) -> T {
-		self.file
+	pub fn into_fd(self) -> OwnedFd {
+		self.fd
 	}
 }
 
-impl<T> From<FromFdError<T>> for std::io::Error {
-	fn from(other: FromFdError<T>) -> Self {
+impl From<FromFdError> for std::io::Error {
+	fn from(other: FromFdError) -> Self {
 		other.into_error()
 	}
 }

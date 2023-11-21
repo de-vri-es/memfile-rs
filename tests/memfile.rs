@@ -1,6 +1,7 @@
 use assert2::{assert, let_assert};
 use memfile::{MemFile, Seal, Seals};
 use std::io::{Read, Write, Seek};
+use std::os::fd::OwnedFd;
 use std::os::unix::io::AsRawFd;
 
 #[test]
@@ -14,18 +15,30 @@ fn create_write_seek_read() {
 	assert!(&buffer == b"Hello world!");
 }
 
+#[track_caller]
+fn dup_stdout() -> OwnedFd {
+	use std::os::fd::FromRawFd;
+	use std::mem::ManuallyDrop;
+
+	let stdout = ManuallyDrop::new(unsafe { std::fs::File::from_raw_fd(1) });
+	let_assert!(Ok(file) = stdout.try_clone());
+	file.into()
+}
+
 #[test]
-fn from_file() {
+fn from_fd() {
 	// We should be able to wrap a MemFile as MemFile again.
 	let_assert!(Ok(original) = MemFile::create_default("foo"));
 	let original_fd = original.as_raw_fd();
-	let_assert!(Ok(moved) = MemFile::from_file(original));
+	let_assert!(Ok(moved) = MemFile::from_fd(original.into_fd()));
 	assert!(moved.as_raw_fd() == original_fd);
 
 	// We should not be able to wrap stdout as MemFile.
-	let_assert!(Err(error) = MemFile::from_file(1));
+	let dupped_stdout = dup_stdout();
+	let dupped_fd = dupped_stdout.as_raw_fd();
+	let_assert!(Err(error) = MemFile::from_fd(dupped_stdout));
 	assert!(error.error().kind() == std::io::ErrorKind::InvalidInput);
-	assert!(error.file() == &1);
+	assert!(error.fd().as_raw_fd() == dupped_fd);
 }
 
 #[test]

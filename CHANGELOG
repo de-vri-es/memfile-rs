@@ -1,3 +1,13 @@
+# Unreleased
+- [remove][major] Remove `MemFile::from_file()`.
+- [change][major] Remove generic type parameter from `FromFdError`.
+- [add][minor] Add `MemFile::from_fd()`.
+- [add][minor] Add `MemFile::into_fd()`.
+- [add][minor] Add `MemFile::as_fd()`.
+- [add][minor] Implement `TryFrom<OwnedFd>` for `MemFile`.
+- [add][minor] Implement `TryFrom<OwnedFd>` for `MemFile`.
+- [add][minor] Implement `AsFd` for `OwnedFd`.
+
 # Version 0.2.1 - 2021-10-30
 - [fix][minor] Fix compatibility with FreeBSD and Android.
 
