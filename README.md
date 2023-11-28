@@ -15,6 +15,16 @@ This is all quite similar to `shm_open`, except that files created by `shm_open`
 Depending on your application, the anonymous nature of `memfd` may be a nice property.
 Additionally, files created by `shm_open` do not support file sealing.
 
+## OS support:
+Currently supported operating systems are:
+* Linux
+* Android
+* FreeBSD
+
+The [`Seal::FutureWrite`] seal is only supported on Linux.
+
+Please feel free to open a PR to add support for your favorite OS if it provides `memfd_create`.
+
 ## File sealing
 You can enable file sealing for [`MemFile`] by creating them with [`CreateOptions::allow_sealing(true)`][CreateOptions::allow_sealing].
 This allows you to use [`MemFile::add_seals`] to add seals to the file.

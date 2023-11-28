@@ -1,3 +1,6 @@
+# Unreleased
+- [change][patch] Add note about supported operating systems in documentation and README.
+
 # Version 0.3.0 - 2023-11-21
 - [remove][major] Remove `MemFile::from_file()`.
 - [change][major] Remove generic type parameter from `FromFdError`.
