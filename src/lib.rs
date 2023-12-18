@@ -303,7 +303,7 @@ pub struct CreateOptions {
 impl CreateOptions {
 	/// Get the default creation options for a [`MemFile`].
 	///
-	/// Initially, file sealing is not enabled no no huge TLB page size is configured.
+	/// Initially, file sealing is not enabled and no huge TLB page size is configured.
 	///
 	/// Note that the close-on-exec flag will always be set on the created file descriptor.
 	/// If you want to pass it to a child process, you should use [`libc::dup2`] or something similar *after forking*.
