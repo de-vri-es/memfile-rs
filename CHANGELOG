@@ -1,3 +1,6 @@
+# Unreleased
+- [fix][patch] Fix typo in documentation.
+
 # Version 0.3.1 - 2023-11-28
 - [change][patch] Add note about supported operating systems in documentation and README.
 
